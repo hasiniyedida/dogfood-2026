@@ -53,6 +53,37 @@ def seed_event():
     db.commit()
     db.close()
 
+def seed_rubric():
+    with open("fixtures.json", "r") as file:
+        data = json.load(file)
+
+    db = get_db()
+
+    event_id = data["event"]["id"]
+
+    db.execute(
+        "DELETE FROM rubric_criteria WHERE event_id = ?",
+        (event_id,)
+    )
+
+    criteria = [
+        ("Functionality", 60),
+        ("Quality", 40)
+    ]
+
+    for name, weight in criteria:
+        db.execute(
+            """
+            INSERT INTO rubric_criteria
+            (event_id, name, weight)
+            VALUES (?, ?, ?)
+            """,
+            (event_id, name, weight)
+        )
+
+    db.commit()
+    db.close()
+
 def seed_tracks():
     with open("fixtures.json", "r") as file:
         data = json.load(file)

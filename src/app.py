@@ -4,7 +4,7 @@ from flask import Flask, request, Response, redirect
 from db import init_db, get_db
 from normalization import calculate_normalized_scores
 import sqlite3
-from seed import seed_users, seed_event, seed_tracks, seed_teams, seed_team_members, seed_projects, seed_scores, seed_assignments, seed_demo_sessions
+from seed import seed_users, seed_event, seed_rubric, seed_tracks, seed_teams, seed_team_members, seed_projects, seed_scores, seed_assignments, seed_demo_sessions
 import uuid
 from datetime import datetime, timezone
 
@@ -1108,13 +1108,27 @@ def judge_workspace():
         <script>
             async function loadJudgeWorkspace() {
                 const projectsBox = document.getElementById("projects");
-                let judgeEventId = null;
 
                 try {
-                    const [projectsResponse, rubricResponse] = await Promise.all([
-                        fetch("/api/judge/projects"),
-                        fetch(`/api/events/${judgeEventId}/rubric`)
-                    ]);
+                    const projectsResponse = await fetch("/api/judge/projects");
+
+                    if (!projectsResponse.ok) {
+                        projectsBox.textContent = "Could not load assigned projects.";
+                        return;
+                    }
+
+                    const projectsData = await projectsResponse.json();
+                    judgeEventId = projectsData.event_id;
+
+                    const rubricResponse =
+                        await fetch(`/api/events/${judgeEventId}/rubric`);
+
+                    if (!rubricResponse.ok) {
+                        projectsBox.textContent = "Could not load judging rubric.";
+                        return;
+                    }
+
+                    const rubricData = await rubricResponse.json();;
 
                     if (!projectsResponse.ok) {
                         projectsBox.textContent = "Could not load assigned projects.";
@@ -1125,10 +1139,6 @@ def judge_workspace():
                         projectsBox.textContent = "Could not load judging rubric.";
                         return;
                     }
-
-                    const projectsData = await projectsResponse.json();
-                    judgeEventId = projectsData.event_id;
-                    const rubricData = await rubricResponse.json();
 
                     if (projectsData.projects.length === 0) {
                         projectsBox.innerHTML =
@@ -1207,7 +1217,7 @@ def judge_workspace():
 
             async function saveScore(projectId) {
                 const rubricResponse =
-                    await fetch(`/api/events/${projectsData.event_id}/rubric`);
+                    await fetch(`/api/events/${judgeEventId}/rubric`);
 
                 const rubricData = await rubricResponse.json();
 
@@ -3816,6 +3826,7 @@ init_db()
 
 seed_users()
 seed_event()
+seed_rubric()
 seed_tracks()
 seed_teams()
 seed_team_members()
