@@ -264,11 +264,27 @@ def seed_demo_sessions():
         ("Participant", "participant@example.org", "participant")
     )
 
+    participant = db.execute(
+        "SELECT id FROM users WHERE email = ?",
+        ("participant@example.org",)
+    ).fetchone()
+
+    if participant:
+        db.execute(
+            """
+            INSERT OR IGNORE INTO team_members
+            (team_id, user_id)
+            VALUES (?, ?)
+            """,
+            ("tm_01", participant[0])
+        )
+
     demo_sessions = [
         ("org_7f2a", "organizer@example.org"),
         ("jdg_a_91bc", judge_a["email"]),
         ("jdg_b_44de", judge_b["email"]),
-        ("prt_2e88", "participant@example.org")
+        ("prt_2e88", "participant@example.org"),
+        ("adm_3c91", "admin@example.org")
     ]
 
     for session_id, email in demo_sessions:

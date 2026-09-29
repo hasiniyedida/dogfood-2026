@@ -71,7 +71,7 @@ CREATE TABLE IF NOT EXISTS scores (
     quality REAL,
     comment TEXT,
     FOREIGN KEY (judge_id) REFERENCES users(id),
-    FOREIGN KEY (project_id) REFERENCES projects(id)
+    FOREIGN KEY (project_id) REFERENCES projects(id),
     UNIQUE (judge_id, project_id)
 );
 CREATE TABLE IF NOT EXISTS score_values (
@@ -101,4 +101,54 @@ CREATE TABLE IF NOT EXISTS sessions (
     user_id INTEGER NOT NULL,
     created_at TEXT NOT NULL,
     FOREIGN KEY (user_id) REFERENCES users(id)
+);
+CREATE TABLE IF NOT EXISTS voting_windows (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    event_id TEXT NOT NULL,
+    starts_at TEXT NOT NULL,
+    ends_at TEXT NOT NULL,
+    FOREIGN KEY (event_id) REFERENCES events(id)
+);
+
+CREATE TABLE IF NOT EXISTS voter_tokens (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    event_id TEXT NOT NULL,
+    token TEXT UNIQUE NOT NULL,
+    created_at TEXT NOT NULL,
+    last_vote_at TEXT,
+    FOREIGN KEY (event_id) REFERENCES events(id)
+);
+
+CREATE TABLE IF NOT EXISTS community_votes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    event_id TEXT NOT NULL,
+    voter_token_id INTEGER NOT NULL,
+    project_id TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    UNIQUE (event_id, voter_token_id),
+    FOREIGN KEY (event_id) REFERENCES events(id),
+    FOREIGN KEY (voter_token_id) REFERENCES voter_tokens(id),
+    FOREIGN KEY (project_id) REFERENCES projects(id)
+);
+
+CREATE TABLE IF NOT EXISTS project_comments (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    project_id TEXT NOT NULL,
+    voter_token_id INTEGER NOT NULL,
+    comment TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    FOREIGN KEY (project_id) REFERENCES projects(id),
+    FOREIGN KEY (voter_token_id) REFERENCES voter_tokens(id)
+);
+
+CREATE TABLE IF NOT EXISTS audit_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    event_id TEXT NOT NULL,
+    action TEXT NOT NULL,
+    voter_token_id INTEGER,
+    project_id TEXT,
+    created_at TEXT NOT NULL,
+    FOREIGN KEY (event_id) REFERENCES events(id),
+    FOREIGN KEY (voter_token_id) REFERENCES voter_tokens(id),
+    FOREIGN KEY (project_id) REFERENCES projects(id)
 );
